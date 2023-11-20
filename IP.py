@@ -63,9 +63,9 @@ IP = raw_input("Give IP: ")
 IP = Check(IP)
 IPlist = Separate(IP)
 
-print IPlist
-
 cidr = input("Please enter the CIDR 1-30 (for subnetting): ")
+
+print IPlist
 
 netmasks = ""
 
@@ -101,23 +101,33 @@ print dec
 print "IP Address in decimal: ", deccomplete
 print "Your net mask is: ", netmasks
 
+answer = raw_input("Do you want to split your network into more subnetworks depending on the amount of PCs or amount of Subnetworks? [PC/Sub]: ")
+while answer!= "PC" and answer !="Sub":
+    answer = raw_input("[PC/Sub]: ")
 
-'''
-tempmask = []
-netmaskd = ""
+if answer == "PC":
+    newpc = input("How many devices do you want your new subnetworks to at least have?: ")
+else:
+    newnets = input("How many subnetworks do you want to at least have?: ")
 
-for i in range(len(netmasks)):
-    tempmask.append(netmasks[i])
-print tempmask
-print len(tempmask)
+found = False
+newdigits = 0
+while not found:
+    if 2**newdigits - 2 >= newpc:
+        found = True
+    else:
+        newdigits += 1
 
-for i in range(len(tempmask)):
-    if tempmask[i] == ".":
-        tempmask.pop(i)
+newcidr = cidr + newdigits
+newsubnetmask = ""
 
-for i in tempmask:
-    netmaskd += i
+for i in range(1,newcidr+1):
+    newsubnetmask += "1"
+    if i % 8 == 0:
+        newsubnetmask += "."
+for i in range(newcidr+1, 33):
+    newsubnetmask += "0"
+    if i % 8 == 0 and i!= 32:
+        newsubnetmask += "."
 
-print netmasks
-print netmaskd
-'''
+print "Your new subnet mask is: ", newsubnetmask
