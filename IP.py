@@ -121,7 +121,7 @@ def access(cidr, newcidr, newdigits, dec, mask):
         if n != ".":
             maskdigitlist.append(n)
 
-    for j in range(newdigits-1, -1, -1):
+    for j in range(newdigits - 1, -1, -1):
         if num / 2 ** j > 0:
             tempstr += "1"
             num -= 2 ** j
@@ -143,9 +143,6 @@ def access(cidr, newcidr, newdigits, dec, mask):
 
     start = cidr + len(tempstr)
     for i in range(start, 32):
-        if i % 8 == 0 and i < 32:
-            subnetIPlist.append(".")
-            subnetIPbroadcastlist.append(".")
         subnetIPlist.append("0")
         subnetIPbroadcastlist.append("1")
 
@@ -161,6 +158,45 @@ def access(cidr, newcidr, newdigits, dec, mask):
     return subnetIP, subnetIPbroadcast
 
 
+def translate(subIP, subbroadcastIP):
+    subIPlist = []
+    subbroadcastIPlist = []
+    subIPlistfinal = []
+    subbroadcastIPlistfinal = []
+    IPfinal = ""
+    IPbroadcastfinal = ""
+
+    for i in subIP:
+        if i != ".":
+            subIPlist.append(i)
+    for i in subbroadcastIP:
+        if i != ".":
+            subbroadcastIPlist.append(i)
+
+    for i in range(4):
+        nums = 0
+        numb = 0
+        for j in range(0, 8):
+            if subIPlist[i * 8 + j] == "1":
+                nums += 2 ** (7 - j)
+
+            if subbroadcastIPlist[i * 8 + j] == "1":
+                numb += 2 ** (7 - j)
+
+        subIPlistfinal.append(str(nums))
+        subbroadcastIPlistfinal.append(str(numb))
+
+    for i in range(1, 6, 2):
+        subIPlistfinal.insert(i, ".")
+        subbroadcastIPlistfinal.insert(i, ".")
+
+    for i in range(len(subbroadcastIPlistfinal)):
+        IPfinal += subIPlistfinal[i]
+        IPbroadcastfinal += subbroadcastIPlistfinal[i]
+
+    return IPfinal, IPbroadcastfinal
+
+
 again = True
 num = ""
 
@@ -170,7 +206,6 @@ IP = Check(IP)
 IPlist = Separate(IP)
 
 cidr = input("Please enter the CIDR 1-30 (for subnetting): ")
-
 
 netmasks = ""
 
@@ -209,6 +244,10 @@ print "Your net mask is: ", netmasks
 answer, newnumber = choice()
 newmask, newcidr, newdigits = subnet(answer, newnumber)
 subnetIP, subnetIPbroadcast = access(cidr, newcidr, newdigits, deccomplete, netmasks)
-print "Your subnetwork IP is: ", subnetIP
-print "Your subnetwork Broadcast IP is: ", subnetIPbroadcast
+decsubnetIP, decsubnetIPbroadcast = translate(subnetIP, subnetIPbroadcast)
+
+print "Your subnetwork IP (in bin) is: ", subnetIP
+print "Your subnetwork Broadcast IP (in bin) is: ", subnetIPbroadcast
+print "Your subnetwork IP (in dec) is: ", decsubnetIP
+print "Your subnetwork Broadcast IP (in dec) is: ", decsubnetIPbroadcast
 print "Your new subnet mask is: ", newmask
