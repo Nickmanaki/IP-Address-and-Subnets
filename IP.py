@@ -1,23 +1,33 @@
-# dec to bin
+# Subnetworks in Python :)
 
 def Check(IP):
     gtfo = False
+
     letters = [' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
                'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-               'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-    while not (gtfo):
+               'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', "-", "_"]
+    while not gtfo:
         dotcount = 0
-        for i in IP:
-            if i in letters:
-                gtfo = False
-            else:
-                gtfo = True
-            if i == ".":
+        correct = True
+        prev = "test"
+        for i in range(len(IP)):
+            if IP[i] == ".":
                 dotcount += 1
-            if dotcount != 3:
-                gtfo = False
-        if not (gtfo):
-            IP = raw_input("Give IP again: ")
+            if IP[i] in letters:
+                correct = False
+            if prev == "." and IP[i] == ".":
+                correct = False
+            prev = IP[i]
+
+        if IP[0] == "." or IP[-1] == ".":
+            correct = False
+        if dotcount != 3:
+            correct = False
+
+        if not correct:
+            IP = raw_input("Give IP again (Wrong form): ")
+        else:
+            gtfo = True
     return IP
 
 
@@ -37,16 +47,18 @@ def Separate(IP):
             if len(IPtest) > 0:
                 IPtest.pop(0)
             IPlist.append(num)
+
         again = False
+
         for i in range(len(IPlist)):
             digit = int(IPlist[i])
             IPlist[i] = digit
-            if digit > 256 or digit < 0:
+            if digit > 256:
                 check = True
             else:
                 again = False
         if check:
-            IP = raw_input("Give IP again again: ")
+            IP = raw_input("Give IP again (Number >256): ")
             IP = Check(IP)
             again = True
             check = False
@@ -104,7 +116,7 @@ def subnet(answer, new):
 def access(cidr, newcidr, newdigits, dec, mask):
     subnetsum = 2 ** (newcidr - cidr)
     print "Your network has been divided to", subnetsum, "subnetworks"
-    answer = input("Which subnetwork do you want to get information from? [1-x]: ")
+    answer = input("Which subnetwork do you want to get information from? [1-"+str(subnetsum)+"]: ")
     num = answer - 1
     IPdigitlist = []
     maskdigitlist = []
@@ -196,6 +208,37 @@ def translate(subIP, subbroadcastIP):
 
     return IPfinal, IPbroadcastfinal
 
+def netmask(cidr):
+    netmask = ""
+    for i in range(1, cidr + 1):
+        netmask += "1"
+        if i % 8 == 0:
+            netmask += "."
+    for i in range(cidr + 1, 33):
+        netmask += "0"
+        if i % 8 == 0 and i != 32:
+            netmask += "."
+    return netmask
+
+def bintohex(lista):
+    dec = []
+    deccomplete = ""
+    for i in range(4):
+        tempstr = ""
+        num = IPlist[i]
+        for j in range(7, -1, -1):
+            if num / 2 ** j > 0:
+                tempstr += "1"
+                num -= 2 ** j
+            else:
+                tempstr += "0"
+        dec.append(tempstr)
+
+    for i in range(len(dec)):
+        deccomplete += dec[i]
+        if i != 3:
+            deccomplete += "."
+    return deccomplete
 
 again = True
 num = ""
@@ -207,43 +250,16 @@ IPlist = Separate(IP)
 
 cidr = input("Please enter the CIDR 1-30 (for subnetting): ")
 
-netmasks = ""
+netmaskstr = netmask(cidr)
 
-for i in range(1, cidr + 1):
-    netmasks += "1"
-    if i % 8 == 0:
-        netmasks += "."
-for i in range(cidr + 1, 33):
-    netmasks += "0"
-    if i % 8 == 0 and i != 32:
-        netmasks += "."
-
-dec = []
-
-for i in range(4):
-    tempstr = ""
-    num = IPlist[i]
-    for j in range(7, -1, -1):
-        if num / 2 ** j > 0:
-            tempstr += "1"
-            num -= 2 ** j
-        else:
-            tempstr += "0"
-    dec.append(tempstr)
-
-deccomplete = ""
-
-for i in range(len(dec)):
-    deccomplete += dec[i]
-    if i != 3:
-        deccomplete += "."
+deccomplete = bintohex(IPlist)
 
 print "IP Address in decimal: ", deccomplete
-print "Your net mask is: ", netmasks
+print "Your net mask is: ", netmaskstr
 
 answer, newnumber = choice()
 newmask, newcidr, newdigits = subnet(answer, newnumber)
-subnetIP, subnetIPbroadcast = access(cidr, newcidr, newdigits, deccomplete, netmasks)
+subnetIP, subnetIPbroadcast = access(cidr, newcidr, newdigits, deccomplete, netmaskstr)
 decsubnetIP, decsubnetIPbroadcast = translate(subnetIP, subnetIPbroadcast)
 
 print "Your subnetwork IP (in bin) is: ", subnetIP
