@@ -1,11 +1,12 @@
 # Subnetworks in Python :)
+import string
+
+letters = string.letters + string.punctuation
+numbers = string.digits
+
 
 def Check(IP):
     gtfo = False
-
-    letters = [' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
-               'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-               'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', "-", "_"]
     while not gtfo:
         dotcount = 0
         correct = True
@@ -31,22 +32,20 @@ def Check(IP):
     return IP
 
 
-def Separate(IP):
+def separate(IP):
     again = True
     check = False
     while again:
+        IP += "."
         IPlist = []
-        IPtest = []
-        for k in IP:
-            IPtest.append(k)
-        for i in range(4):
-            num = ""
-            while len(IPtest) != 0 and IPtest[0] != ".":
-                num += IPtest[0]
-                IPtest.pop(0)
-            if len(IPtest) > 0:
-                IPtest.pop(0)
-            IPlist.append(num)
+        num = ""
+
+        for i in range(len(IP)):
+            if IP[i] in numbers:
+                num += IP[i]
+            else:
+                IPlist.append(num)
+                num = ""
 
         again = False
 
@@ -57,12 +56,14 @@ def Separate(IP):
                 check = True
             else:
                 again = False
+
         if check:
             IP = raw_input("Give IP again (Number >256): ")
             IP = Check(IP)
             again = True
             check = False
-            IPlist, IPtest = [], []
+            IPlist = []
+
     return IPlist
 
 
@@ -80,18 +81,18 @@ def choice():
 
 def subnet(answer, new):
     newsubnetmask = ""
+    found = False
+
     if answer == "PC":
-        found = False
         zeros = 0
         while not found:
             if 2 ** zeros - 2 >= new:
                 found = True
             else:
                 zeros += 1
-        newcidr = cidr + (32 - cidr - zeros)
+        newcidr = 32 - zeros
         new = 32 - cidr - zeros
     else:
-        found = False
         ones = 0
         while not found:
             if 2 ** ones >= new:
@@ -103,12 +104,10 @@ def subnet(answer, new):
 
     for i in range(1, newcidr + 1):
         newsubnetmask += "1"
-        if i % 8 == 0:
-            newsubnetmask += "."
     for i in range(newcidr + 1, 33):
         newsubnetmask += "0"
-        if i % 8 == 0 and i != 32:
-            newsubnetmask += "."
+    for i in range(8, 35, 9):
+        newsubnetmask.insert(i, ".")
 
     return newsubnetmask, newcidr, new
 
@@ -246,7 +245,7 @@ num = ""
 IP = raw_input("Give IP: ")
 
 IP = Check(IP)
-IPlist = Separate(IP)
+IPlist = separate(IP)
 
 cidr = input("Please enter the CIDR 1-30 (for subnetting): ")
 
