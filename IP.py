@@ -1,9 +1,17 @@
 # Subnetworks in Python :)
 import string
 
-letters = string.letters + string.punctuation
+letters = string.letters + string.punctuation.replace(".","")
+
 numbers = string.digits
 
+
+def makelist(lista):
+    items = []
+    for item in lista:
+        if item != ".":
+            items.append(item)
+    return items
 
 def Check(IP):
     gtfo = False
@@ -80,7 +88,6 @@ def choice():
 
 
 def subnet(answer, new):
-    newsubnetmask = ""
     found = False
 
     if answer == "PC":
@@ -102,35 +109,23 @@ def subnet(answer, new):
         newcidr = cidr + ones
         new = ones
 
-    for i in range(1, newcidr + 1):
-        newsubnetmask += "1"
-    for i in range(newcidr + 1, 33):
-        newsubnetmask += "0"
-    for i in range(8, 35, 9):
-        newsubnetmask.insert(i, ".")
+    newsubnetmask = netmask(newcidr)
 
     return newsubnetmask, newcidr, new
 
 
-def access(cidr, newcidr, newdigits, dec, mask):
+def access(cidr, newcidr, newdigits, dec):
     subnetsum = 2 ** (newcidr - cidr)
     print "Your network has been divided to", subnetsum, "subnetworks"
     answer = input("Which subnetwork do you want to get information from? [1-"+str(subnetsum)+"]: ")
     num = answer - 1
-    IPdigitlist = []
-    maskdigitlist = []
+    IPdigitlist = makelist(dec)
     subnetIPlist = []
     subnetIPbroadcastlist = []
     tempstr = ""
     subnetIP = ""
     subnetIPbroadcast = ""
     c = 0
-    for n in dec:
-        if n != ".":
-            IPdigitlist.append(n)
-    for n in mask:
-        if n != ".":
-            maskdigitlist.append(n)
 
     for j in range(newdigits - 1, -1, -1):
         if num / 2 ** j > 0:
@@ -140,12 +135,9 @@ def access(cidr, newcidr, newdigits, dec, mask):
             tempstr += "0"
 
     for i in range(cidr):
-        if IPdigitlist[i] == maskdigitlist[i]:
-            subnetIPlist.append(maskdigitlist[i])
-        else:
-            subnetIPlist.append("0")
+        subnetIPlist.append(IPdigitlist[i])
 
-    for i in range(cidr + 1, cidr + len(tempstr) + 1):
+    for i in range(cidr, cidr + len(tempstr)):
         subnetIPlist.append(tempstr[c])
         c += 1
 
@@ -153,6 +145,7 @@ def access(cidr, newcidr, newdigits, dec, mask):
         subnetIPbroadcastlist.append(n)
 
     start = cidr + len(tempstr)
+
     for i in range(start, 32):
         subnetIPlist.append("0")
         subnetIPbroadcastlist.append("1")
@@ -170,19 +163,12 @@ def access(cidr, newcidr, newdigits, dec, mask):
 
 
 def translate(subIP, subbroadcastIP):
-    subIPlist = []
-    subbroadcastIPlist = []
-    subIPlistfinal = []
-    subbroadcastIPlistfinal = []
+    subIPlistdec = []
+    subbroadcastIPlistdec = []
     IPfinal = ""
     IPbroadcastfinal = ""
-
-    for i in subIP:
-        if i != ".":
-            subIPlist.append(i)
-    for i in subbroadcastIP:
-        if i != ".":
-            subbroadcastIPlist.append(i)
+    subIPlist = makelist(subIP)
+    subbroadcastIPlist = makelist(subbroadcastIP)
 
     for i in range(4):
         nums = 0
@@ -194,16 +180,16 @@ def translate(subIP, subbroadcastIP):
             if subbroadcastIPlist[i * 8 + j] == "1":
                 numb += 2 ** (7 - j)
 
-        subIPlistfinal.append(str(nums))
-        subbroadcastIPlistfinal.append(str(numb))
+        subIPlistdec.append(str(nums))
+        subbroadcastIPlistdec.append(str(numb))
 
     for i in range(1, 6, 2):
-        subIPlistfinal.insert(i, ".")
-        subbroadcastIPlistfinal.insert(i, ".")
+        subIPlistdec.insert(i, ".")
+        subbroadcastIPlistdec.insert(i, ".")
 
-    for i in range(len(subbroadcastIPlistfinal)):
-        IPfinal += subIPlistfinal[i]
-        IPbroadcastfinal += subbroadcastIPlistfinal[i]
+    for i in range(len(subbroadcastIPlistdec)):
+        IPfinal += subIPlistdec[i]
+        IPbroadcastfinal += subbroadcastIPlistdec[i]
 
     return IPfinal, IPbroadcastfinal
 
@@ -219,12 +205,12 @@ def netmask(cidr):
             netmask += "."
     return netmask
 
-def bintohex(lista):
+def bintodec(lista):
     dec = []
     deccomplete = ""
     for i in range(4):
         tempstr = ""
-        num = IPlist[i]
+        num = lista[i]
         for j in range(7, -1, -1):
             if num / 2 ** j > 0:
                 tempstr += "1"
@@ -239,30 +225,46 @@ def bintohex(lista):
             deccomplete += "."
     return deccomplete
 
+
 again = True
-num = ""
+
 
 IP = raw_input("Give IP: ")
+while again:
+    subagain = True
+    IP = Check(IP)
+    IPlist = separate(IP)
 
-IP = Check(IP)
-IPlist = separate(IP)
+    cidr = input("Please enter the CIDR 1-30 (for subnetting): ")
 
-cidr = input("Please enter the CIDR 1-30 (for subnetting): ")
+    netmaskstr = netmask(cidr)
 
-netmaskstr = netmask(cidr)
+    deccomplete = bintodec(IPlist)
 
-deccomplete = bintohex(IPlist)
+    print "IP Address in decimal: ", deccomplete
+    print "Your net mask is: ", netmaskstr
 
-print "IP Address in decimal: ", deccomplete
-print "Your net mask is: ", netmaskstr
+    answer, newnumber = choice()
+    while subagain:
+        newmask, newcidr, newdigits = subnet(answer, newnumber)
+        subnetIP, subnetIPbroadcast = access(cidr, newcidr, newdigits, deccomplete)
+        decsubnetIP, decsubnetIPbroadcast = translate(subnetIP, subnetIPbroadcast)
 
-answer, newnumber = choice()
-newmask, newcidr, newdigits = subnet(answer, newnumber)
-subnetIP, subnetIPbroadcast = access(cidr, newcidr, newdigits, deccomplete, netmaskstr)
-decsubnetIP, decsubnetIPbroadcast = translate(subnetIP, subnetIPbroadcast)
+        print "Your subnetwork IP (in bin) is: ", subnetIP
+        print "Your subnetwork Broadcast IP (in bin) is: ", subnetIPbroadcast
+        print "Your subnetwork IP (in dec) is: ", decsubnetIP
+        print "Your subnetwork Broadcast IP (in dec) is: ", decsubnetIPbroadcast
+        print "Your new subnet mask is: ", newmask
+        goagain = raw_input("Would you like to access a different subnetwork? [Y/N]: ")
+        while goagain not in ["Y", "N"]:
+            goagain = raw_input("Would you like to access a different subnetwork? [Y/N]: ")
+        if goagain == "N":
+            IP = raw_input("Please enter a new IP address (Type 0.0.0.0 to end program): ")
+            subagain = False
+            if IP == "0.0.0.0":
+                again = False
+                print "We're done here pal"
 
-print "Your subnetwork IP (in bin) is: ", subnetIP
-print "Your subnetwork Broadcast IP (in bin) is: ", subnetIPbroadcast
-print "Your subnetwork IP (in dec) is: ", decsubnetIP
-print "Your subnetwork Broadcast IP (in dec) is: ", decsubnetIPbroadcast
-print "Your new subnet mask is: ", newmask
+
+
+
