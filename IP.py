@@ -79,7 +79,7 @@ def choice():
     answer = raw_input(
         "Do you want to split your network into more subnetworks depending on the amount of PCs or amount of Subnetworks? [PC/Sub]: ")
     while answer != "PC" and answer != "Sub":
-        answer = raw_input("[PC/Sub]: ")
+        answer = raw_input("Please enter either 'PC' or 'Sub': ")
     if answer == "PC":
         new = input("How many devices do you want your new subnetworks to at least have?: ")
     else:
@@ -197,7 +197,7 @@ def netmask(cidr):
     netmask = ""
     for i in range(1, cidr + 1):
         netmask += "1"
-        if i % 8 == 0:
+        if i % 8 == 0 and i != 32:
             netmask += "."
     for i in range(cidr + 1, 33):
         netmask += "0"
@@ -234,8 +234,17 @@ while again:
     subagain = True
     IP = Check(IP)
     IPlist = separate(IP)
+    sure = "N"
+    goagain = "N"
 
-    cidr = input("Please enter the CIDR 1-30 (for subnetting): ")
+    cidr = input("Please enter the CIDR 1-32: ")
+    while cidr not in range(1,33):
+        cidr = input("Please enter the CIDR 1-32: ")
+
+    if cidr > 30:
+        sure = raw_input("Are you sure you want to proceed? Your cidr is higher than 30, so you will not be able to make subnets [Y/N]: ")
+        while sure not in ["Y", "N"]:
+            sure = raw_input("Please enter either 'Y' or 'N': ")
 
     netmaskstr = netmask(cidr)
 
@@ -244,27 +253,25 @@ while again:
     print "IP Address in decimal: ", deccomplete
     print "Your net mask is: ", netmaskstr
 
-    answer, newnumber = choice()
-    while subagain:
-        newmask, newcidr, newdigits = subnet(answer, newnumber)
-        subnetIP, subnetIPbroadcast = access(cidr, newcidr, newdigits, deccomplete)
-        decsubnetIP, decsubnetIPbroadcast = translate(subnetIP, subnetIPbroadcast)
+    if sure != "Y":
+        answer, newnumber = choice()
+        while subagain:
+            newmask, newcidr, newdigits = subnet(answer, newnumber)
+            subnetIP, subnetIPbroadcast = access(cidr, newcidr, newdigits, deccomplete)
+            decsubnetIP, decsubnetIPbroadcast = translate(subnetIP, subnetIPbroadcast)
 
-        print "Your subnetwork IP (in bin) is: ", subnetIP
-        print "Your subnetwork Broadcast IP (in bin) is: ", subnetIPbroadcast
-        print "Your subnetwork IP (in dec) is: ", decsubnetIP
-        print "Your subnetwork Broadcast IP (in dec) is: ", decsubnetIPbroadcast
-        print "Your new subnet mask is: ", newmask
-        goagain = raw_input("Would you like to access a different subnetwork? [Y/N]: ")
-        while goagain not in ["Y", "N"]:
+            print "Your subnetwork IP (in bin) is: ", subnetIP
+            print "Your subnetwork Broadcast IP (in bin) is: ", subnetIPbroadcast
+            print "Your subnetwork IP (in dec) is: ", decsubnetIP
+            print "Your subnetwork Broadcast IP (in dec) is: ", decsubnetIPbroadcast
+            print "Your new subnet mask is: ", newmask
             goagain = raw_input("Would you like to access a different subnetwork? [Y/N]: ")
-        if goagain == "N":
-            IP = raw_input("Please enter a new IP address (Type 0.0.0.0 to end program): ")
-            subagain = False
-            if IP == "0.0.0.0":
-                again = False
-                print "We're done here pal"
-
-
-
+            while goagain not in ["Y", "N"]:
+                goagain = raw_input("Would you like to access a different subnetwork? [Y/N]: ")
+    if goagain == "N":
+        IP = raw_input("Please enter a new IP address (Type 0.0.0.0 to end program): ")
+        subagain = False
+        if IP == "0.0.0.0":
+            again = False
+            print "We're done here pal"
 
