@@ -128,7 +128,7 @@ def access(cidr, newcidr, newdigits, dec):
     subnetsum = 2 ** (newcidr - cidr)
     print "Your network has been divided to", subnetsum, "subnetworks"
     answer = input("Which subnetwork do you want to get information from? [1-"+str(subnetsum)+"]: ")
-    while answer > subnetsum and answer <= 0:
+    while answer > subnetsum or answer <= 0:
         answer = input("Please choose a number in the range listed above: ")
     num = answer - 1
     IPdigitlist = makelist(dec)
