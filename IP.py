@@ -92,7 +92,7 @@ def choice(number):
     else:
         new = input("How many subnetworks do you want to at least have?: ")
         while new > subs:
-            new = input("You can't make this many subnetworks, please keep it under or equal to "+str(subs))
+            new = input("You can't make this many subnetworks, please keep it under or equal to "+str(subs)+": ")
 
     return answer, new
 
@@ -244,6 +244,8 @@ again = True
 
 
 IP = raw_input("Give IP: ")
+if IP == "0.0.0.0":
+    again = False
 while again:
     subagain = True
     IP = Check(IP)
@@ -291,7 +293,8 @@ while again:
                 goagain = raw_input("Would you like to access a different subnetwork? [Y/N]: ")
             if goagain =="N":
                 subagain = False
-    IP = raw_input("Please enter a new IP address (Type 0.0.0.0 to end program): ")
+    if IP != "0.0.0.0":
+        IP = raw_input("Please enter a new IP address (Type 0.0.0.0 to end program): ")
     if IP == "0.0.0.0":
         again = False
         print "We're done here pal"
