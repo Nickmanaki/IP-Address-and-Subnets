@@ -75,15 +75,25 @@ def separate(IP):
     return IPlist
 
 
-def choice():
-    answer = raw_input(
-        "Do you want to split your network into more subnetworks depending on the amount of PCs or amount of Subnetworks? [PC/Sub]: ")
+def choice(number):
+    subs = 2 ** (number-2)
+    pcs = 2 ** (number-1) - 2
+
+    print "You can make up to", str(subs), "subnetworks"
+
+    answer = raw_input("Do you want to split your network into more subnetworks depending on the amount of PCs or amount of Subnetworks? [PC/Sub]: ")
     while answer != "PC" and answer != "Sub":
         answer = raw_input("Please enter either 'PC' or 'Sub': ")
+
     if answer == "PC":
-        new = input("How many devices do you want your new subnetworks to at least have?: ")
+        new = input("How many devices do you want your new subnetworks to at least have?(Max devices "+str(pcs)+"): ")
+        while new > pcs:
+            new = input("In order to make subnetworks, each one must have at maximum "+str(pcs)+" devices: ")
     else:
         new = input("How many subnetworks do you want to at least have?: ")
+        while new > subs:
+            new = input("You can't make this many subnetworks, please keep it under or equal to "+str(subs))
+
     return answer, new
 
 
@@ -109,7 +119,7 @@ def subnet(answer, new):
         newcidr = cidr + ones
         new = ones
 
-    newsubnetmask = netmask(newcidr)
+    newsubnetmask, null = netmask(newcidr)
 
     return newsubnetmask, newcidr, new
 
@@ -118,6 +128,8 @@ def access(cidr, newcidr, newdigits, dec):
     subnetsum = 2 ** (newcidr - cidr)
     print "Your network has been divided to", subnetsum, "subnetworks"
     answer = input("Which subnetwork do you want to get information from? [1-"+str(subnetsum)+"]: ")
+    while answer > subnetsum and answer <= 0:
+        answer = input("Please choose a number in the range listed above: ")
     num = answer - 1
     IPdigitlist = makelist(dec)
     subnetIPlist = []
@@ -195,15 +207,17 @@ def translate(subIP, subbroadcastIP):
 
 def netmask(cidr):
     netmask = ""
+    zerocounter = 0
     for i in range(1, cidr + 1):
         netmask += "1"
         if i % 8 == 0 and i != 32:
             netmask += "."
     for i in range(cidr + 1, 33):
         netmask += "0"
+        zerocounter += 1
         if i % 8 == 0 and i != 32:
             netmask += "."
-    return netmask
+    return netmask, zerocounter
 
 def bintodec(lista):
     dec = []
@@ -236,25 +250,32 @@ while again:
     IPlist = separate(IP)
     sure = "N"
     goagain = "N"
+    cidring = True
 
-    cidr = input("Please enter the CIDR 1-32: ")
-    while cidr not in range(1,33):
+    while cidring:
         cidr = input("Please enter the CIDR 1-32: ")
+        while cidr not in range(1,33):
+            cidr = input("Please enter the CIDR 1-32: ")
 
-    if cidr > 30:
-        sure = raw_input("Are you sure you want to proceed? Your cidr is higher than 30, so you will not be able to make subnets [Y/N]: ")
-        while sure not in ["Y", "N"]:
-            sure = raw_input("Please enter either 'Y' or 'N': ")
+        if cidr > 29:
+            sure = raw_input("Are you sure you want to proceed? Your cidr is higher than 30, so you will not be able to make subnets [Y/N]: ")
+            while sure not in ["Y", "N"]:
+                sure = raw_input("Please enter either 'Y' or 'N': ")
+        else:
+            cidring = False
+        if sure == "Y":
+            cidring = False
 
-    netmaskstr = netmask(cidr)
 
+    netmaskstr, amount = netmask(cidr)
     deccomplete = bintodec(IPlist)
+
 
     print "IP Address in decimal: ", deccomplete
     print "Your net mask is: ", netmaskstr
 
     if sure != "Y":
-        answer, newnumber = choice()
+        answer, newnumber = choice(amount)
         while subagain:
             newmask, newcidr, newdigits = subnet(answer, newnumber)
             subnetIP, subnetIPbroadcast = access(cidr, newcidr, newdigits, deccomplete)
@@ -268,10 +289,10 @@ while again:
             goagain = raw_input("Would you like to access a different subnetwork? [Y/N]: ")
             while goagain not in ["Y", "N"]:
                 goagain = raw_input("Would you like to access a different subnetwork? [Y/N]: ")
-    if goagain == "N":
-        IP = raw_input("Please enter a new IP address (Type 0.0.0.0 to end program): ")
-        subagain = False
-        if IP == "0.0.0.0":
-            again = False
-            print "We're done here pal"
+            if goagain =="N":
+                subagain = False
+    IP = raw_input("Please enter a new IP address (Type 0.0.0.0 to end program): ")
+    if IP == "0.0.0.0":
+        again = False
+        print "We're done here pal"
 
