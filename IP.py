@@ -1,9 +1,56 @@
 # Subnetworks in Python :)
 import string
 
-letters = string.letters + string.punctuation.replace(".","")
+letters = string.letters + string.punctuation.replace(".", "")
 
 numbers = string.digits
+
+
+def menu():
+    print "1. Look up the IP of x device in the subnetwork"
+    print "2. Choose a different subnetwork"
+    print "3. Enter a new IP"
+    option = input("What would you like to do [1-3]: ")
+    while option not in range(1, 4):
+        option = input("Please enter a number between the range[1-3]: ")
+    print
+    return option
+
+
+def searchpc(subIP, broadcastIP):
+    i = len(subIP)-1
+    j = len(broadcastIP)-1
+    numIP = ""
+    numbroadcast = ""
+
+    while subIP[i] != ".":
+        numIP += subIP[i]
+        i -= 1
+    while broadcastIP[j] != ".":
+        numbroadcast += broadcastIP[j]
+        j -= 1
+
+    numIP, numbroadcast = int(numIP[::-1]), int(numbroadcast[::-1])
+    PCamount = numbroadcast - numIP
+
+    pcnum = input("There are "+str(PCamount)+" devices in this network, which one would like to see the IP of?: ")
+    while pcnum <= 0 or pcnum >= numbroadcast-numIP:
+        pcnum = input("There are "+str(PCamount)+" devices in this subnetwork, please choose a number between 0 and " + str(PCamount)+": ")
+
+    newend = str(numIP + pcnum)
+    deviceip = ""
+
+    dotcount = 0
+    k = 0
+    while dotcount < 3:
+        if subIP[k] == ".":
+            dotcount += 1
+        deviceip += subIP[k]
+        k += 1
+
+    deviceip += newend
+
+    return deviceip, pcnum
 
 
 def makelist(lista):
@@ -12,6 +59,7 @@ def makelist(lista):
         if item != ".":
             items.append(item)
     return items
+
 
 def Check(IP):
     gtfo = False
@@ -87,11 +135,11 @@ def choice(number):
 
     if answer == "PC":
         new = input("How many devices do you want your new subnetworks to at least have?(Max devices "+str(pcs)+"): ")
-        while new > pcs:
+        while new > pcs or new <= 0:
             new = input("In order to make subnetworks, each one must have at maximum "+str(pcs)+" devices: ")
     else:
         new = input("How many subnetworks do you want to at least have?: ")
-        while new > subs:
+        while new > subs or new <= 0:
             new = input("You can't make this many subnetworks, please keep it under or equal to "+str(subs)+": ")
 
     return answer, new
@@ -126,7 +174,7 @@ def subnet(answer, new):
 
 def access(cidr, newcidr, newdigits, dec):
     subnetsum = 2 ** (newcidr - cidr)
-    print "Your network has been divided to", subnetsum, "subnetworks"
+    print "Your network has been divided to", subnetsum, "subnetworks"+"\n"
     answer = input("Which subnetwork do you want to get information from? [1-"+str(subnetsum)+"]: ")
     while answer > subnetsum or answer <= 0:
         answer = input("Please choose a number in the range listed above: ")
@@ -205,6 +253,7 @@ def translate(subIP, subbroadcastIP):
 
     return IPfinal, IPbroadcastfinal
 
+
 def netmask(cidr):
     netmask = ""
     zerocounter = 0
@@ -218,6 +267,7 @@ def netmask(cidr):
         if i % 8 == 0 and i != 32:
             netmask += "."
     return netmask, zerocounter
+
 
 def bintodec(lista):
     dec = []
@@ -256,7 +306,7 @@ while again:
 
     while cidring:
         cidr = input("Please enter the CIDR 1-32: ")
-        while cidr not in range(1,33):
+        while cidr not in range(1, 33):
             cidr = input("Please enter the CIDR 1-32: ")
 
         if cidr > 29:
@@ -268,17 +318,16 @@ while again:
         if sure == "Y":
             cidring = False
 
-
     netmaskstr, amount = netmask(cidr)
     deccomplete = bintodec(IPlist)
 
-
     print "IP Address in decimal: ", deccomplete
-    print "Your net mask is: ", netmaskstr
+    print "Your net mask is: ", netmaskstr + "\n"
 
     if sure != "Y":
         answer, newnumber = choice(amount)
         while subagain:
+            menuing = True
             newmask, newcidr, newdigits = subnet(answer, newnumber)
             subnetIP, subnetIPbroadcast = access(cidr, newcidr, newdigits, deccomplete)
             decsubnetIP, decsubnetIPbroadcast = translate(subnetIP, subnetIPbroadcast)
@@ -288,14 +337,20 @@ while again:
             print "Your subnetwork IP (in dec) is: ", decsubnetIP
             print "Your subnetwork Broadcast IP (in dec) is: ", decsubnetIPbroadcast
             print "Your new subnet mask is: ", newmask
-            goagain = raw_input("Would you like to access a different subnetwork? [Y/N]: ")
-            while goagain not in ["Y", "N"]:
-                goagain = raw_input("Would you like to access a different subnetwork? [Y/N]: ")
-            if goagain =="N":
-                subagain = False
+            print
+            while menuing:
+                next = menu()
+                if next == 1:
+                    pcIP, pcnumber = searchpc(decsubnetIP, decsubnetIPbroadcast)
+                    print "Device #"+str(pcnumber), "has the following IP: "+pcIP+"\n"
+                elif next == 2:
+                    subagain = True
+                    menuing = False
+                else:
+                    subagain = False
+                    menuing = False
     if IP != "0.0.0.0":
         IP = raw_input("Please enter a new IP address (Type 0.0.0.0 to end program): ")
     if IP == "0.0.0.0":
         again = False
         print "We're done here pal"
-
